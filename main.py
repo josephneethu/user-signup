@@ -17,7 +17,17 @@
 import webapp2
 import re
 
-
+page_header = """
+<!DOCTYPE html>
+<html>
+<head>
+    <style type="text/css">
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+"""
 form="""
 
 <h1> Signup</h1>
@@ -26,31 +36,34 @@ form="""
         <tbody>
             <tr>
                 <td> <label>Username</label> </td>
-                <td><input name = "username" type = "text" value =""></td>
-                <td style="color:red"></td>
+                <td><input name = "username" type = "text"></td>
+                <td class="error">%(username_error)s</td>
             </tr>
             <tr>
                 <td><label>Password </label></td>
-                <td><input name = "password" type = "password" value =""></td>
-                <td style="color:red "></td>
+                <td><input name = "password" type = "password"></td>
+                <td class ="error">%(password_error)s</td>
             </tr>
             <tr>
                 <td><label> Verify Password</label></td>
-                <td><input name = "verify" type ="password" value =""></td>
-                <td style="color:red " ></td>
+                <td><input name = "verify" type ="password"></td>
+                <td class="error">%(verify_password_error)s</td>
             </tr>
             <tr>
                 <td><label> Email (optional)</label></td>
-                <td><input name ="email" type = "email" value =""></td>
-                <td style="color:red " ></td>
+                <td><input name ="email" type = "email"></td>
+                <td class="error">%(email_error)s</td>
             </tr>
         </tbody
     </table>
     <br>
-    <input type ="submit">
+<input type ="submit">
 </form>
 """
-
+page_footer = """
+</body>
+</html>
+"""
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
     return username and USER_RE.match(username)
@@ -67,10 +80,43 @@ def valid_email(email):
 
 
 class MainHandler(webapp2.RequestHandler):
+
+    def write_form(self,username_error ="",password_error="",verify_password_error="",email_error=""):
+        self.response.write(page_header+form+page_footer %{"username_error":username_error,
+                                                            "password_error":password_error,
+                                                            "verify_password_error":verify_password_error,
+                                                            "email_error":email_error
+                                                        })
     def get(self):
-        self.response.write(form)
+        self.write_form()
+
     def post(self):
-        self.response.write(form)
+        flag = False
+
+        username = self.request.get('username')
+        password = self.request.get('password')
+        verify = self.request.get('verify')
+        email = self.request.get('email')
+
+
+        if not valid_username(username):
+            flag = True
+
+        if not valid_password(password):
+            flag = True
+        elif password != verify:
+            flag = True
+        if not valid_email(email):
+            flag = True
+        if flag :
+            self.write_form(page_header+form+page_footer,username_error,password_error,verify_password_error,email_error)
+        else:
+            self.redirect('/welcome?username='+username)
+class WelcomeHandler(webapp2.RequestHandler):
+    def get(self):
+        username = self.request.get('username')
+        self.response.write("Welcome  " +username)
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/welcome',WelcomeHandler)
 ], debug=True)
