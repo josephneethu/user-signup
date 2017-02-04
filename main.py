@@ -25,11 +25,17 @@ page_header = """
         .error {
             color: red;
         }
+        table {
+        border : 1px solid black;
+        background-color: #ff9999;
+        }
+        td {
+        padding: 8px;
+        }
     </style>
 </head>
 """
 form="""
-
 <h1> Signup</h1>
 <form method ="post">
     <table>
@@ -57,13 +63,22 @@ form="""
         </tbody
     </table>
     <br>
-<input type ="submit">
+    <br>
+        <div>
+            <input type ="submit">
+        </div>
 </form>
 """
 page_footer = """
-</body>
+
 </html>
 """
+welcome_page = """
+    <body>
+    <h2> Welcome, %(username)s !! </h2>
+    </body>
+"""
+
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
     return username and USER_RE.match(username)
@@ -72,50 +87,60 @@ PWD_RE = re.compile(r"^.{3,20}$")
 def valid_password(password):
     return password and PWD_RE.match(password)
 
-#def verify_password():
-#    return verify
 EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
 def valid_email(email):
     return not email or EMAIL_RE.match(email)
 
-
 class MainHandler(webapp2.RequestHandler):
 
     def write_form(self,username_error ="",password_error="",verify_password_error="",email_error=""):
-        self.response.write(page_header+form+page_footer %{"username_error":username_error,
-                                                            "password_error":password_error,
-                                                            "verify_password_error":verify_password_error,
-                                                            "email_error":email_error
-                                                        })
+        self.response.write (page_header+form %{'username_error':username_error,
+                                                'password_error':password_error,
+                                                'verify_password_error':verify_password_error,
+                                                'email_error':email_error}+page_footer)
     def get(self):
         self.write_form()
 
     def post(self):
-        flag = False
-
+#  pulls data enterd by the user
         username = self.request.get('username')
         password = self.request.get('password')
         verify = self.request.get('verify')
         email = self.request.get('email')
 
 
-        if not valid_username(username):
-            flag = True
+        if valid_username(username) and valid_password(password)and valid_email(email)and(password == verify):
 
-        if not valid_password(password):
-            flag = True
-        elif password != verify:
-            flag = True
-        if not valid_email(email):
-            flag = True
-        if flag :
-            self.write_form(page_header+form+page_footer,username_error,password_error,verify_password_error,email_error)
-        else:
             self.redirect('/welcome?username='+username)
+        else:
+            params = {}
+# if any of the above fields arent valid - display the error message
+            if not valid_username(username):
+                params['username_error'] = ("That is not a valid user name")
+            else:
+                params['username_error'] = ("")
+            if not valid_password(password):
+                params['password_error'] = ("The password you entered is not valid")
+            else:
+                params['password_error']  = (" ")
+            if not (password == verify):
+                params['verify_password_error']  = ("The passwords you entered don't match")
+            else:
+                params['verify_password_error'] = (" ")
+            if not valid_email(email) :
+                params['email_error']    = ("Thats not a valid email")
+            else:
+                params['email_error']    = ("")
+
+            self.write_form(**params)
+
 class WelcomeHandler(webapp2.RequestHandler):
     def get(self):
         username = self.request.get('username')
-        self.response.write("Welcome  " +username)
+        if valid_username(username):
+            self.response.write(page_header+welcome_page %{'username':username}+page_footer)
+        else:
+            self.redirect('/')
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/welcome',WelcomeHandler)
