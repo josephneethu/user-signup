@@ -60,7 +60,7 @@ form="""
                 <td><input name ="email" type = "email"></td>
                 <td class="error">%(email_error)s</td>
             </tr>
-        </tbody
+        </tbody>
     </table>
     <br>
     <br>
@@ -113,7 +113,7 @@ class MainHandler(webapp2.RequestHandler):
 
             self.redirect('/welcome?username='+username)
         else:
-    # dictionary for error messages        
+    # dictionary for error messages
             params = {}
 # if any of the above fields arent valid - display the error message
             if not valid_username(username):
