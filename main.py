@@ -113,6 +113,7 @@ class MainHandler(webapp2.RequestHandler):
 
             self.redirect('/welcome?username='+username)
         else:
+    # dictionary for error messages        
             params = {}
 # if any of the above fields arent valid - display the error message
             if not valid_username(username):
